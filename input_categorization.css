@@ -1,0 +1,18 @@
+body {
+  text-align: center;
+}
+
+svg text {
+  font-family: arial, sans-serif;
+  font-size: 12px;
+}
+
+.chart_area rect:hover {
+  stroke: #555;
+  stroke-width: 1px;
+  stroke-dasharray: 8 2;
+}
+
+text.hover_indname {
+  font-weight: bold;
+}
