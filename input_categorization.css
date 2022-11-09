@@ -7,6 +7,14 @@ svg text {
   font-size: 12px;
 }
 
+.button_area rect:hover {
+  stroke: #555;
+}
+
+.button_area text {
+  pointer-events: none;
+}
+
 .chart_area rect:hover {
   stroke: #555;
   stroke-width: 1px;

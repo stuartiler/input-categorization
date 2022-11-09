@@ -1,13 +1,13 @@
 /* input_categorization.js
    This file creates a stacked, horizontal bar chart showing
-   the complement, substitute, and "other" values produced
-   by combine_categorizations_with_weights.py. It requires
-   a .csv file with the values to display and assumes the
-   presence of (1) an HTML SVG element to contain the
-   visualization and (2) a simple CSS file that specifies
-   the text style, the :hover pseudo-class for the
-   rectangles, and the font weight for the industry name
-   in the hover box. */
+   the complement, substitute, and "other" (uncategorized)
+   values produced by combine_categorizations_with_weights.py.
+   It requires a .csv file with the values to display and
+   assumes the presence of (1) an HTML SVG element to contain
+   the visualization and (2) a simple CSS file that specifies
+   the text style, the :hover pseudo-classes for the
+   buttons and rectangles, and the font weight for the
+   industry name in the hover box. */
 
 
 /* Store a reference to the svg element, set the
@@ -15,7 +15,7 @@
    and height of the visualization taking account
    of the margins */
 var svg = d3.select("svg"),
-    margin = {top: 25, right: 20, bottom: 25, left: 100},
+    margin = {top: 55, right: 20, bottom: 25, left: 100},
     width = +svg.attr("width") - margin.left - margin.right,
     height = +svg.attr("height") - margin.top - margin.bottom;
 
@@ -26,6 +26,79 @@ var svgEl = document.querySelector("svg");
 var svgRect = svgEl.getBoundingClientRect();
 var hover_adjustX = svgRect.x + window.scrollX;
 var hover_adjustY = svgRect.y + window.scrollY;
+
+/* Create a group for the buttons and position it
+   above the chart area to be created below */
+var button_area = svg.append("g")
+  .attr("class", "button_area")
+  .attr("transform", "translate(" + margin.left + "," + (3/4*margin.top) + ")");
+
+/* Add three rectangles with text to represent the
+   buttons; set the click events to re-sort the
+   chart depending on which button was pressed */
+button_area.append("rect")
+  .attr("class", "complements")
+  .attr("width", 100)
+  .attr("height", 40)
+  .attr("transform", "translate(" + (width/4-50) +",-23)")
+  .attr("rx", 5)
+  .attr("fill", "#e07a5f")
+  .attr("opacity", 0.8)
+  .on("click", (e,d) => {
+    if(sort_by != 'complements') {
+      sort_by = 'complements';
+      draw_chart();
+      button_area.select("rect.complements").attr("fill", "#e07a5f");
+      button_area.select("rect.substitutes").attr("fill", "#fff");
+      button_area.select("rect.other").attr("fill", "#fff");
+    }
+  });
+button_area.append("text")
+  .attr("transform", "translate(" + (width/4) +",0)")
+  .attr("text-anchor", "middle")
+  .text("Complements");
+button_area.append("rect")
+  .attr("class", "substitutes")
+  .attr("width", 100)
+  .attr("height", 40)
+  .attr("transform", "translate(" + (width/2-50) +",-23)")
+  .attr("rx", 5)
+  .attr("fill", "#fff")
+  .attr("opacity", 0.8)
+  .on("click", (e,d) => {
+    if(sort_by != 'substitutes') {
+      sort_by = 'substitutes';
+      draw_chart();
+      button_area.select("rect.complements").attr("fill", "#fff");
+      button_area.select("rect.substitutes").attr("fill", "#81b29a");
+      button_area.select("rect.other").attr("fill", "#fff");
+    }
+  });
+button_area.append("text")
+  .attr("transform", "translate(" + (width/2) +",0)")
+  .attr("text-anchor", "middle")
+  .text("Substitutes");
+button_area.append("rect")
+  .attr("class", "other")
+  .attr("width", 100)
+  .attr("height", 40)
+  .attr("transform", "translate(" + (3/4*width-50) +",-23)")
+  .attr("rx", 5)
+  .attr("fill", "#fff")
+  .attr("opacity", 0.8)
+  .on("click", (e,d) => {
+    if(sort_by != 'other') {
+      sort_by = 'other';
+      draw_chart();
+      button_area.select("rect.complements").attr("fill", "#fff");
+      button_area.select("rect.substitutes").attr("fill", "#fff");
+      button_area.select("rect.other").attr("fill", "#f4f1de");
+    }
+  });
+button_area.append("text")
+  .attr("transform", "translate(" + (3/4*width) +",0)")
+  .attr("text-anchor", "middle")
+  .text("Uncategorized");
 
 /* Create a group for the visualization and
    set its width and height */
@@ -94,23 +167,24 @@ var sort_by = "complements";
 var up_or_down = "upstream";
 
 // Load the data and draw the visualization
+var category_data;
 d3.csv("./results_data/complement_and_substitute_values_324_wide.csv")
-  .then(function(category_data) {
+  .then(function(loaded_data) {
 
     /* Extract either the upstream or downtsream values
        from the dataset */
-    category_data = category_data.filter(d => d.direction == up_or_down);
+    category_data = loaded_data.filter(d => d.direction == up_or_down);
 
     // Draw the visualization
-    draw_chart(category_data);
+    draw_chart();
 
 });
 
-/* FUNCTION: draw_chart(category_data)
-   This function takes the upstream or downstream
-   complement/substitute values and draws/updates
+/* FUNCTION: draw_chart()
+   This function uses the upstream or downstream
+   complement/substitute values to draw/update
    a sorted, horizontal bar chart */
-function draw_chart(category_data) {
+function draw_chart() {
 
   /* Create the transition for rearranging the bars
      and the labels when the chart is re-sorted */
@@ -177,16 +251,6 @@ function draw_chart(category_data) {
             /* When the mouse is brought over a group, store
                the group name for use below */
             hover_key = d.key;
-
-          })
-          .on("click", (e,d) => {
-
-            /* When the mouse is clicked on a group, set
-               the new sort order and re-draw the chart */
-            if(sort_by != d.key) {
-              sort_by = d.key;
-              draw_chart(category_data);
-            }
 
           });
 
