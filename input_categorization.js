@@ -15,7 +15,7 @@
    and height of the visualization taking account
    of the margins */
 var svg = d3.select("svg"),
-    margin = {top: 55, right: 20, bottom: 25, left: 100},
+    margin = {top: 80, right: 20, bottom: 25, left: 200},
     width = +svg.attr("width") - margin.left - margin.right,
     height = +svg.attr("height") - margin.top - margin.bottom;
 
@@ -31,7 +31,7 @@ var hover_adjustY = svgRect.y + window.scrollY;
    above the chart area to be created below */
 var button_area = svg.append("g")
   .attr("class", "button_area")
-  .attr("transform", "translate(" + margin.left + "," + (3/4*margin.top) + ")");
+  .attr("transform", "translate(" + 0 + "," + (0.6*margin.top) + ")");
 
 /* Add three rectangles with text to represent the
    buttons; set the click events to re-sort the
@@ -40,12 +40,12 @@ button_area.append("rect")
   .attr("class", "complements")
   .attr("width", 100)
   .attr("height", 40)
-  .attr("transform", "translate(" + (width/4-50) +",-23)")
+  .attr("transform", "translate(" + (+svg.attr("width")/3-50) +",-23)")
   .attr("rx", 5)
   .attr("fill", "#e07a5f")
   .attr("opacity", 0.8)
   .on("click", (e,d) => {
-    if(sort_by != 'complements') {
+    if(sort_by !== 'complements') {
       sort_by = 'complements';
       draw_chart();
       button_area.select("rect.complements").attr("fill", "#e07a5f");
@@ -54,19 +54,19 @@ button_area.append("rect")
     }
   });
 button_area.append("text")
-  .attr("transform", "translate(" + (width/4) +",0)")
+  .attr("transform", "translate(" + (+svg.attr("width")/3) +",0)")
   .attr("text-anchor", "middle")
   .text("Complements");
 button_area.append("rect")
   .attr("class", "substitutes")
   .attr("width", 100)
   .attr("height", 40)
-  .attr("transform", "translate(" + (width/2-50) +",-23)")
+  .attr("transform", "translate(" + (2*+svg.attr("width")/3-50) +",-23)")
   .attr("rx", 5)
   .attr("fill", "#fff")
   .attr("opacity", 0.8)
   .on("click", (e,d) => {
-    if(sort_by != 'substitutes') {
+    if(sort_by !== 'substitutes') {
       sort_by = 'substitutes';
       draw_chart();
       button_area.select("rect.complements").attr("fill", "#fff");
@@ -75,30 +75,9 @@ button_area.append("rect")
     }
   });
 button_area.append("text")
-  .attr("transform", "translate(" + (width/2) +",0)")
+  .attr("transform", "translate(" + (2*+svg.attr("width")/3) +",0)")
   .attr("text-anchor", "middle")
   .text("Substitutes");
-button_area.append("rect")
-  .attr("class", "other")
-  .attr("width", 100)
-  .attr("height", 40)
-  .attr("transform", "translate(" + (3/4*width-50) +",-23)")
-  .attr("rx", 5)
-  .attr("fill", "#fff")
-  .attr("opacity", 0.8)
-  .on("click", (e,d) => {
-    if(sort_by != 'other') {
-      sort_by = 'other';
-      draw_chart();
-      button_area.select("rect.complements").attr("fill", "#fff");
-      button_area.select("rect.substitutes").attr("fill", "#fff");
-      button_area.select("rect.other").attr("fill", "#f4f1de");
-    }
-  });
-button_area.append("text")
-  .attr("transform", "translate(" + (3/4*width) +",0)")
-  .attr("text-anchor", "middle")
-  .text("Uncategorized");
 
 /* Create a group for the visualization and
    set its width and height */
@@ -151,7 +130,7 @@ var x_scale = d3.scaleLinear()
 // Create the color scale
 var color_scale = d3.scaleOrdinal()
     .domain(['complements', 'substitutes', 'other'])
-    .range(["#e07a5f", "#81b29a", "#f4f1de"]);
+    .range(["#e07a5f", "#81b29a", "#f9f7eb"]);
 
 /* Create a variable that will store which
    key group the mouse pointer is over */
@@ -162,18 +141,18 @@ var hover_key = "";
    to sort on the complements values */
 var sort_by = "complements";
 
-/* Specify whether the visualization will display
-   the upstream or downstream values */
-var up_or_down = "upstream";
+/* Specify whether the visualization will show the
+   upstream results or the downstream results */
+const up_or_down = "upstream";
 
 // Load the data and draw the visualization
 var category_data;
-d3.csv("./results_data/complement_and_substitute_values_324_wide.csv")
+d3.csv('./results_data/complement_and_substitute_values_324_wide.csv')
   .then(function(loaded_data) {
 
     /* Extract either the upstream or downtsream values
        from the dataset */
-    category_data = loaded_data.filter(d => d.direction == up_or_down);
+    category_data = loaded_data.filter(d => d.direction === up_or_down);
 
     // Draw the visualization
     draw_chart();
@@ -200,7 +179,7 @@ function draw_chart() {
      stack order (where 0 is the complements group, 1 is
      the substitutes group, and 2 is the "other" group)
      and re-sort the data */
-  var stack_order = [];
+  let stack_order = [];
   switch(sort_by) {
 
     case "complements":
@@ -213,7 +192,7 @@ function draw_chart() {
       category_data.sort(function(a, b) { return b.substitutes - a.substitutes; });
       break;
 
-    case "other":
+    default:
       stack_order = [2, 0, 1];
       category_data.sort(function(a, b) { return b.other - a.other; });
       break;
@@ -222,7 +201,7 @@ function draw_chart() {
 
   /* Set the domain for the vertical scale to be
      the list of industry codes */
-  y_scale.domain(category_data.map(function(d) { return d.industry; }));
+  y_scale.domain(category_data.map(function(d) { return (d.description.length <= 20 ? d.description : d.description.substring(0,27) + "..."); }));
 
   /* Create the stack generator using the order
      specified above */
@@ -262,7 +241,7 @@ function draw_chart() {
            to 0.3 to make the complements and substitutes
            groups easier to see */
         return update.attr("opacity", function(d) {
-          if (d.key == "other") {
+          if (d.key === "other") {
             return 0.3;
           }
           else {
@@ -285,7 +264,7 @@ function draw_chart() {
         /* Create the rectangles and set their positions,
            widths, and heights */
         return enter.append("rect")
-          .attr("y", function(d) { return y_scale(d.data.industry); })
+          .attr("y", function(d) { return y_scale((d.data.description.length <= 20 ? d.data.description : d.data.description.substring(0,27) + "...")); })
           .attr("x", function(d) { return x_scale(d[0]); })
           .attr("width", function(d) { return x_scale(d[1]) - x_scale(d[0]); })
           .attr("height", y_scale.bandwidth())
@@ -314,7 +293,7 @@ function draw_chart() {
                     Math.round(d.data.substitutes * 10000)/100 + "%");
                 break;
 
-              case "other":
+              default:
                 hover.select(".hover_detail")
                   .text("% " + up_or_down + " uncategorized: " +
                     Math.round(d.data.other * 10000)/100 + "%");
@@ -332,10 +311,10 @@ function draw_chart() {
             /* Retrieve the mouse coordinates and calculate the
                hover box's x and y coordinates so that the box
                does not go outside of the svg container */
-            var coords = d3.pointer(e, svg);
-            var box_x = Math.min(coords[0] - hover_adjustX + 10,
+            let coords = d3.pointer(e, svg);
+            let box_x = Math.min(coords[0] - hover_adjustX + 10,
               svg.attr("width") - hover.select("rect").attr("width") - 10);
-            var box_y = Math.min(coords[1] - hover_adjustY + 10,
+            let box_y = Math.min(coords[1] - hover_adjustY + 10,
               svg.attr("height") - hover.select("rect").attr("height") - 10);
 
             /* Set the new position of the hover box and make
@@ -357,7 +336,7 @@ function draw_chart() {
 
         // Update the positions and widths of the rectangles
         return update.transition(t)
-          .attr("y", function(d) { return y_scale(d.data.industry); })
+          .attr("y", function(d) { return y_scale((d.data.description.length <= 20 ? d.data.description : d.data.description.substring(0,27) + "...")); })
           .attr("x", function(d) { return x_scale(d[0]); })
           .attr("width", function(d) { return x_scale(d[1]) - x_scale(d[0]); });
 
